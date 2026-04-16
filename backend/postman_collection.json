@@ -1,0 +1,1553 @@
+{
+  "info": {
+    "name": "Game Recommendation Backend API",
+    "description": "Complete API collection for testing the Game Recommendation Backend with authentication, game management, external API integration, hardware-based recommendations, and UI content management.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@example.com",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "Admin123!",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"Test123!\",\n  \"isAdmin\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Register a new user account"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has user data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.user).to.exist;",
+                  "    pm.expect(jsonData.user.username).to.eql(pm.request.body.raw.username || pm.request.body.raw.email);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login and get JWT token"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has token\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.token).to.exist;",
+                  "    pm.collectionVariables.set(\"jwt_token\", jsonData.token);",
+                  "});",
+                  "",
+                  "pm.test(\"User info is present\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.user).to.exist;",
+                  "    pm.expect(jsonData.user.email).to.eql(pm.request.body.raw.email);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "profile"]
+            },
+            "description": "Get current user profile (requires authentication)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has user data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData._id).to.exist;",
+                  "    pm.expect(jsonData.username).to.exist;",
+                  "    pm.expect(jsonData.email).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🎮 Game Management",
+      "item": [
+        {
+          "name": "Get All Games",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games/getAllGames",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "getAllGames"]
+            },
+            "description": "Get all games from the database"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Game By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games/getGame/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "getGame", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "64f3a8b5c8d9e1234567890a",
+                  "description": "Game ID to retrieve"
+                }
+              ]
+            },
+            "description": "Get a specific game by ID"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Response has game data\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData._id).to.exist;",
+                  "        pm.expect(jsonData.title).to.exist;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add Game",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Cyberpunk 2077\",\n  \"description\": \"An open-world, action-adventure RPG set in a futuristic metropolis\",\n  \"releaseDate\": \"2020-12-10\",\n  \"developer\": \"CD Projekt Red\",\n  \"publisher\": \"CD Projekt\",\n  \"genres\": [\"Action\", \"RPG\", \"Open World\"],\n  \"platforms\": [\"PC\", \"PlayStation\", \"Xbox\"],\n  \"specs\": {\n    \"minimum\": {\n      \"os\": \"Windows 10 64-bit\",\n      \"cpu\": \"Intel Core i5-3570K / AMD FX-8310\",\n      \"gpu\": \"NVIDIA GeForce GTX 780 / AMD Radeon RX 470\",\n      \"ram\": 8,\n      \"storage\": 70\n    },\n    \"recommended\": {\n      \"os\": \"Windows 10 64-bit\",\n      \"cpu\": \"Intel Core i7-4790 / AMD Ryzen 3 3200G\",\n      \"gpu\": \"NVIDIA GeForce GTX 1060 6GB / AMD Radeon R9 Fury\",\n      \"ram\": 12,\n      \"storage\": 70\n    }\n  },\n  \"images\": [\n    \"https://example.com/cyberpunk1.jpg\"\n  ],\n  \"externalApiData\": {\n    \"RAWG\": {\n      \"id\": 12345,\n      \"slug\": \"cyberpunk-2077\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/games/addGame",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "addGame"]
+            },
+            "description": "Add a new game (requires admin access)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has created game\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData._id).to.exist;",
+                  "    pm.expect(jsonData.title).to.eql(pm.request.body.raw.title);",
+                  "    pm.collectionVariables.set(\"test_game_id\", jsonData._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Game",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Cyberpunk 2077 - Updated\",\n  \"description\": \"Updated description\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/games/updateGame/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "updateGame", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{test_game_id}}",
+                  "description": "Game ID to update"
+                }
+              ]
+            },
+            "description": "Update an existing game (requires admin access)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Game was updated\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.title).to.eql(pm.request.body.raw.title);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Game",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games/deleteGame/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "deleteGame", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{test_game_id}}",
+                  "description": "Game ID to delete"
+                }
+              ]
+            },
+            "description": "Delete a game (requires admin access)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Success message returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🌐 External Game Integration",
+      "item": [
+        {
+          "name": "Fetch External Games",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apis\": [\"RAWG\", \"IGDB\"],\n  \"limit\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/external/fetch-external",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "external", "fetch-external"]
+            },
+            "description": "Fetch games from external APIs (RAWG, IGDB, Steam)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has fetched games\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.fetchedCount).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Cache Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/cache-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "external", "cache-status"]
+            },
+            "description": "Get cache statistics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has cache stats\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.totalEntries).to.exist;",
+                  "    pm.expect(jsonData.hitRate).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Cache Entries",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/cache-entries?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "external", "cache-entries"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Get all cache entries (paginated)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has entries array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.entries).to.be.an('array');",
+                  "    pm.expect(jsonData.pagination).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Cache",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apis\": [\"RAWG\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/external/refresh-cache/:cacheId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "external", "refresh-cache", ":cacheId"],
+              "variable": [
+                {
+                  "key": "cacheId",
+                  "value": "64f3a8b5c8d9e1234567890b",
+                  "description": "Cache entry ID to refresh"
+                }
+              ]
+            },
+            "description": "Refresh cache for specific specs"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Cache was refreshed\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalidate Cache",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cacheIds\": [\"64f3a8b5c8d9e1234567890b\"],\n  \"source\": \"RAWG\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/external/invalidate-cache",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "external", "invalidate-cache"]
+            },
+            "description": "Invalidate cache by IDs or source"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Invalidation successful\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.invalidatedCount).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cleanup Expired Cache",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/cleanup-cache",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "external", "cleanup-cache"]
+            },
+            "description": "Cleanup expired cache entries"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Cleanup completed\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.deletedCount).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "AI Discover Games",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetSpecs\": {\n    \"cpu\": \"Intel Core i7-12700K\",\n    \"gpu\": \"NVIDIA GeForce RTX 3080\",\n    \"ram\": 32\n  },\n  \"limit\": 20,\n  \"sources\": [\"RAWG\", \"IGDB\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/external/ai-discover",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "external", "ai-discover"]
+            },
+            "description": "Trigger AI game discovery based on target specs"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response structure is correct\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.riskLevel).to.exist;",
+                  "    pm.expect(jsonData.guidance).to.exist;",
+                  "    pm.expect(jsonData.symptomsIdentified).to.exist;",
+                  "    pm.expect(jsonData.games).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Games are returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.games.length > 0) {",
+                  "        pm.expect(jsonData.games[0].title).to.exist;",
+                  "        pm.expect(jsonData.games[0].performanceScore).to.exist;",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get AI Service Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/ai-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "external", "ai-status"]
+            },
+            "description": "Get AI discovery service status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has service info\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.service).to.exist;",
+                  "    pm.expect(jsonData.status).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "💻 Hardware Recommendations",
+      "item": [
+        {
+          "name": "Get Recommendations",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpu\": \"Intel Core i7-12700K\",\n  \"gpu\": \"NVIDIA GeForce RTX 3080\",\n  \"ram\": 32,\n  \"storage\": 1000,\n  \"preferences\": {\n    \"genres\": [\"Action\", \"RPG\"],\n    \"minRating\": 7.5\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations"]
+            },
+            "description": "Get game recommendations based on hardware specs"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has recommendations\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.recommendations).to.exist;",
+                  "    pm.expect(jsonData.recommendations).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Each game has performance tier\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    jsonData.recommendations.forEach(function(game) {",
+                  "        pm.expect(game.performanceTier).to.exist;",
+                  "        pm.expect(game.performanceScore).to.be.a('number');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🖼️ Slider Management",
+      "item": [
+        {
+          "name": "Get All Sliders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sliders/getAllSliders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sliders", "getAllSliders"]
+            },
+            "description": "Get all slider banners"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Slider By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sliders/getSlider/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sliders", "getSlider", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "64f3a8b5c8d9e1234567890c",
+                  "description": "Slider ID to retrieve"
+                }
+              ]
+            },
+            "description": "Get a specific slider by ID"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Response has slider data\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData._id).to.exist;",
+                  "        pm.expect(jsonData.imageUrl).to.exist;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Slider",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Summer Sale 2024\",\n  \"imageUrl\": \"https://example.com/slider1.jpg\",\n  \"targetUrl\": \"/promotions/summer-sale\",\n  \"priority\": 1,\n  \"isActive\": true,\n  \"startDate\": \"2024-06-01T00:00:00Z\",\n  \"endDate\": \"2024-08-31T23:59:59Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sliders/createSlider",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sliders", "createSlider"]
+            },
+            "description": "Create a new slider banner (requires admin access)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has created slider\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData._id).to.exist;",
+                  "    pm.expect(jsonData.title).to.eql(pm.request.body.raw.title);",
+                  "    pm.collectionVariables.set(\"test_slider_id\", jsonData._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Slider",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Summer Sale 2024 - Updated\",\n  \"priority\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sliders/updateSlider/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sliders", "updateSlider", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{test_slider_id}}",
+                  "description": "Slider ID to update"
+                }
+              ]
+            },
+            "description": "Update an existing slider (requires admin access)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Slider was updated\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.title).to.eql(pm.request.body.raw.title);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Slider",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sliders/deleteSlider/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sliders", "deleteSlider", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{test_slider_id}}",
+                  "description": "Slider ID to delete"
+                }
+              ]
+            },
+            "description": "Delete a slider (requires admin access)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Success message returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🧪 Test Scenarios",
+      "item": [
+        {
+          "name": "1. Complete User Flow",
+          "item": [
+            {
+              "name": "Register New User",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"NewUser123!\",\n  \"isAdmin\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "register"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"User registered successfully\", function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Login as User",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"NewUser123!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "login"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Login successful\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.collectionVariables.set(\"user_token\", jsonData.token);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get User Profile",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{user_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "profile"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Profile retrieved\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get All Games (Unauthenticated)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/games/getAllGames",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "games", "getAllGames"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Games retrieved without auth\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Recommendations",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cpu\": \"Intel Core i5-11400F\",\n  \"gpu\": \"NVIDIA GeForce RTX 3060\",\n  \"ram\": 16\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/recommendations",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "recommendations"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Recommendations returned\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.recommendations.length).to.be.above(0);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "2. Admin Flow",
+          "item": [
+            {
+              "name": "Admin Login",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "login"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Admin login successful\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.user.isAdmin).to.be.true;",
+                      "    pm.collectionVariables.set(\"jwt_token\", jsonData.token);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Create Test Game",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Test Game\",\n  \"description\": \"A test game for validation\",\n  \"releaseDate\": \"2024-01-01\",\n  \"developer\": \"Test Studio\",\n  \"genres\": [\"Test\"],\n  \"platforms\": [\"PC\"],\n  \"specs\": {\n    \"minimum\": {\n      \"cpu\": \"Intel Core i3\",\n      \"gpu\": \"GTX 750 Ti\",\n      \"ram\": 4,\n      \"storage\": 10\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/games/addGame",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "games", "addGame"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Game created\", function () {",
+                      "    pm.response.to.have.status(201);",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.collectionVariables.set(\"test_game_id\", jsonData._id);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Create Test Slider",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Test Banner\",\n  \"imageUrl\": \"https://example.com/test.jpg\",\n  \"priority\": 10,\n  \"isActive\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/sliders/createSlider",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "sliders", "createSlider"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Slider created\", function () {",
+                      "    pm.response.to.have.status(201);",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.collectionVariables.set(\"test_slider_id\", jsonData._id);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Fetch External Games",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"apis\": [\"RAWG\"],\n  \"limit\": 5\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/external/fetch-external",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "external", "fetch-external"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"External games fetched\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Cleanup - Delete Test Game",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/games/deleteGame/:id",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "games", "deleteGame", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{test_game_id}}",
+                      "description": "Game ID to delete"
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Test game deleted\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Cleanup - Delete Test Slider",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/sliders/deleteSlider/:id",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "sliders", "deleteSlider", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{test_slider_id}}",
+                      "description": "Slider ID to delete"
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Test slider deleted\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+# 🎮 Game Recommender — Backend API
+
+A production-grade REST API built with **Node.js + Express + MongoDB** that recommends PC games based on user hardware specifications.
+
+---
+
+## High-Level Features
+
+- **Authentication & roles**: JWT-based auth, roles `user` and `admin`, with protected and admin-only routes.
+- **Game catalog management**: Full CRUD for games with filters and sorting.
+- **Hardware-based recommendation engine**: Scores games 0–100 against user PC specs and logs each recommendation.
+- **External game sources & caching**: Fetches games from external APIs, analyzes specs, and caches results for repeated queries.
+- **Slider/Banner management**: Admin-controlled sliders for the frontend homepage.
+- **User library**: Bookmarks and favorites per authenticated user.
+
+---
+
+## Core Modules & Responsibilities
+
+- **Entrypoint**
+  - `server.js`: Loads environment variables, connects to MongoDB, and starts the Express server.
+
+- **App setup**
+  - `src/app.js`: Configures CORS and body parsing, exposes `/health` and `/`, and mounts all feature routes:
+    - `/api/auth` → auth routes
+    - `/api/games` → game catalog routes
+    - `/api/recommendations` → recommendation engine
+    - `/api/slider` → slider/banner routes
+    - `/api/external` → external game + cache admin tools
+    - `/api/library` → user library (bookmarks/favorites)
+
+- **Models**
+  - `User`: auth data, role, and embedded `library` (bookmarks & favorites).
+  - `Game`: core game catalog with min hardware requirements and metadata.
+  - `RecommendationLog`: logs of recommendation runs (user, specs, results).
+  - `Slider`: slider/banner items used by the frontend.
+  - `ExternalGameSource` & `DeviceSearchCache`: external API source info and cached recommendation results.
+
+- **Middleware**
+  - `Authmiddleware`: `protect` (JWT), `adminOnly`, `optionalAuth`.
+  - `validationMiddleware`: validation rules for auth, games, and recommendations.
+  - `errorMiddleware`: `notFound` + centralized `errorHandler`.
+
+- **Services & Utils**
+  - `Recommendationservice`: main DB-based recommendation engine.
+  - `Comparehardware`: scoring algorithm (0–100) based on user specs vs game min specs.
+  - `CacheService`: get/set/invalidate/cleanup cached recommendation results.
+  - `ExternalGameService`: imports and updates games from external APIs.
+  - `SpecAnalyzerService`: classifies hardware into performance tiers and computes spec hashes.
+  - `AIGameDiscoveryService`: AI-based discovery/enrichment of games.
+
+---
+
+## Feature → Route → Controller Mapping
+
+- **Auth**
+  - Routes: `/api/auth`
+  - Controllers: `Authcontroller.register`, `Authcontroller.login`, `Authcontroller.getProfile`
+
+- **Games**
+  - Routes: `/api/games`
+  - Controllers: `Gamecontroller.addGame`, `getAllGames`, `getGameById`, `updateGame`, `deleteGame`
+
+- **Recommendations**
+  - Routes: `/api/recommendations`
+  - Controller: `Recommendationcontroller.recommend`
+  - Internals: uses `Recommendationservice.getRecommendations`, `Comparehardware`, `CacheService`, `ExternalGameService`, `SpecAnalyzerService`
+
+- **Sliders**
+  - Routes: `/api/slider`
+  - Controllers: `sliderController.createSlider`, `getAllSliders`, `getSliderById`, `updateSlider`, `deleteSlider`
+
+- **User Library**
+  - Routes: `/api/library`
+  - Controllers: `Librarycontroller.getMyLibrary`, `addBookmark`, `removeBookmark`, `addFavorite`, `removeFavorite`
+
+- **External & Cache Admin**
+  - Routes: `/api/external`
+  - Controller: `ExternalGamesController` (`fetchExternalGames`, cache status/entries, refresh/invalidate/cleanup cache, AI discovery and status)
+
+---
+
+## Request Flow (Flow Chart)
+
+```text
+Client HTTP Request
+        │
+        ▼
+Express app (src/app.js)
+  - CORS
+  - JSON / URL-encoded body parsing
+        │
+        ▼
+Route module (by path)
+  /api/auth
+  /api/games
+  /api/recommendations
+  /api/slider
+  /api/external
+  /api/library
+        │
+        ▼
+Middleware (as required)
+  - protect / optionalAuth / adminOnly
+  - validation rules + validate()
+        │
+        ▼
+Controller function
+  - Business logic
+  - Calls services / models / utils
+        │
+        ▼
+Service layer (for complex flows)
+  - Recommendationservice
+  - CacheService
+  - ExternalGameService
+  - SpecAnalyzerService
+  - AIGameDiscoveryService
+        │
+        ▼
+Mongoose models → MongoDB
+        │
+        ▼
+JSON response → Client
+```
+
+---
+
+## Recommendation Engine Flow (Detailed)
+
+```text
+POST /api/recommendations
+Body: { ram, cpu, gpu, storage }
+   │
+   ▼
+optionalAuth + validationMiddleware
+   │
+   ▼
+Recommendationcontroller.recommend
+   │
+   ├─ Build numeric userSpecs + range checks
+   ├─ CacheService.getCachedResult(userSpecs)?
+   │     ├─ HIT  → return cached games (fromCache = true)
+   │     └─ MISS:
+   │          ├─ SpecAnalyzerService.analyzeSpecs(userSpecs)
+   │          ├─ ExternalGameService.fetchExternalGames(performanceTier, useAllApis = true)
+   │          ├─ Recommendationservice.getRecommendations(userSpecs, userId)
+   │          │     ├─ Load games from DB
+   │          │     ├─ Comparehardware(userSpecs, game.minSpecs)
+   │          │     ├─ Filter incompatible, sort by matchScore
+   │          │     └─ Log to RecommendationLog (async)
+   │          └─ CacheService.setCachedResult(userSpecs, games, apiSources)
+   │
+   ▼
+JSON response:
+  - games[], totalMatches
+  - userSpecs, performanceTier
+  - fromCache, externalApiUsed, apiSources
+  - specAnalysis (hashes, gpuCategory, cpuClass)
+```
+
+For even more detailed docs (models, error codes, and endpoint tables), see `PROJECT_DETAIL.md`.

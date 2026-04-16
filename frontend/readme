@@ -1,0 +1,122 @@
+
+# 🎮 Game Recommender — Frontend
+
+A production-grade React SPA for discovering PC games based on your hardware specs.
+
+---
+
+## Tech Stack
+
+| Tech | Purpose |
+|------|---------|
+| React 18 | UI Framework |
+| React Router v6 | Client-side routing |
+| Axios | HTTP requests |
+| Context API | Global state (Auth) |
+
+---
+
+## Project Structure
+
+```
+frontend/
+├── public/
+│   └── index.html
+├── src/
+│   ├── pages/
+│   │   ├── Home.jsx         # Landing page
+│   │   ├── Login.jsx        # Authentication
+│   │   ├── Register.jsx     # Account creation
+│   │   ├── Dashboard.jsx    # Browse all games
+│   │   ├── Recommend.jsx    # Hardware input + results
+│   │   └── AdminPanel.jsx   # Game CRUD (Admin)
+│   ├── components/
+│   │   ├── Navbar.jsx          # Navigation bar
+│   │   ├── GameCard.jsx        # Game display card
+│   │   ├── HardwareForm.jsx    # Spec input form
+│   │   └── ProtectedRoute.jsx  # Route guard
+│   ├── services/
+│   │   └── api.js              # All Axios API calls
+│   ├── context/
+│   │   └── AuthContext.jsx     # Auth global state
+│   ├── App.jsx                 # Root + routes
+│   └── index.js               # Entry point
+└── package.json
+```
+
+---
+
+## Setup Instructions
+
+### 1. Install Dependencies
+
+```bash
+cd frontend
+npm install
+```
+
+### 2. Configure Environment (optional)
+
+```bash
+# .env
+REACT_APP_API_URL=http://localhost:5000/api
+```
+
+### 3. Start Development Server
+
+```bash
+npm start
+# Runs on http://localhost:3000
+```
+
+---
+
+## Pages & Routes
+
+| Route | Page | Access |
+|-------|------|--------|
+| `/` | Home | Public |
+| `/login` | Login | Public |
+| `/register` | Register | Public |
+| `/dashboard` | Game Library | Public |
+| `/recommend` | Get Recommendations | Authenticated |
+| `/admin` | Admin Panel | Admin only |
+
+---
+
+## Frontend → Backend Mapping
+
+| Page | Method | Endpoint |
+|------|--------|----------|
+| Register.jsx | POST | `/api/auth/register` |
+| Login.jsx | POST | `/api/auth/login` |
+| Dashboard.jsx | GET | `/api/games` |
+| Recommend.jsx | POST | `/api/recommend` |
+| AdminPanel.jsx | POST/PUT/DELETE | `/api/games` |
+
+---
+
+## Authentication
+
+JWT token stored in `localStorage`. Automatically attached to every request via Axios interceptor. On 401 response, user is auto-logged-out and redirected to `/login`.
+
+---
+
+## Key Features
+
+- **Recommendation Engine UI** — Enter CPU/RAM/GPU/Storage and get ranked game matches
+- **Match Score** — Each result shows a 0–100% compatibility score
+- **Hardware Presets** — Quick-fill "Low-end", "Mid-range", "High-end", "Gaming Beast"
+- **Genre & Platform Filters** — Filter the game library by multiple categories
+- **Admin Panel** — Full game CRUD with inline table editing
+- **Role-based Routing** — `ProtectedRoute` guards user and admin pages
+- **Global Auth State** — via React Context API
+
+---
+
+## Design System
+
+- Color palette: Deep navy + purple accent (`#6c63ff`) on dark backgrounds
+- Dark theme throughout (`#0a0a14` base)
+- Glassmorphism-style cards with gradient borders
+- Responsive grid layouts for game cards
